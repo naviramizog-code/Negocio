@@ -481,7 +481,7 @@
 <!-- FIREBASE SDK -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getDatabase, ref, push, set, onValue, get } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { getDatabase, ref, push, set, onValue, get, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
 // ══════════════════════════════════════════════
 //  🔥 CONFIGURA AQUÍ TU FIREBASE
@@ -506,6 +506,7 @@ window._push = push;
 window._set = set;
 window._onValue = onValue;
 window._get = get;
+window._remove = remove;
 window._firebaseReady = true;
 window.dispatchEvent(new Event('firebaseReady'));
 </script>
@@ -625,6 +626,20 @@ window.dispatchEvent(new Event('firebaseReady'));
     </div>
     <button class="btn-primary" onclick="guardarProducto()">Guardar producto</button>
     <button class="btn-secondary" onclick="cerrarModal()">Cancelar</button>
+  </div>
+</div>
+
+<!-- MODAL PIN -->
+<div class="modal-overlay" id="modalPin">
+  <div class="modal">
+    <div class="modal-title">🔐 PIN requerido</div>
+    <div style="font-size:0.8rem;color:var(--muted);margin-bottom:14px">Solo el administrador puede eliminar registros</div>
+    <div class="input-group">
+      <label class="input-label">PIN</label>
+      <input type="password" id="pinInput" placeholder="••••" inputmode="numeric" maxlength="4" style="font-size:1.4rem;letter-spacing:0.3em;text-align:center">
+    </div>
+    <button class="btn-primary" onclick="confirmarPin()">Confirmar</button>
+    <button class="btn-secondary" onclick="cerrarModalPin()">Cancelar</button>
   </div>
 </div>
 
@@ -888,7 +903,7 @@ async function guardarGasto() {
 function renderGastosHoy() {
   dbListen('gastos', val => {
     const hoyStr = hoy();
-    const gastos = val ? Object.values(val).filter(g => g.fecha === hoyStr) : [];
+    const gastos = val ? Object.entries(val).filter(([,g]) => g.fecha === hoyStr) : [];
     if (!gastos.length) {
       document.getElementById('listaGastosHoy').innerHTML = '<div class="empty-state"><div class="icon">💸</div>Sin gastos registrados</div>';
       document.getElementById('totalGastosHoy').textContent = '$0';
@@ -896,9 +911,15 @@ function renderGastosHoy() {
     }
     let total = 0;
     let html = '';
-    for (const g of gastos) {
+    for (const [id, g] of gastos) {
       total += g.monto;
-      html += `<div class="gasto-item"><span class="gasto-desc">${g.desc}</span><span class="gasto-monto">-$${g.monto.toFixed(0)}</span></div>`;
+      html += `<div class="gasto-item">
+        <span class="gasto-desc">${g.desc}</span>
+        <span style="display:flex;align-items:center;gap:8px">
+          <span class="gasto-monto">-$${g.monto.toFixed(0)}</span>
+          <button onclick="pedirPin('gasto','${id}')" style="background:none;border:1px solid var(--red);color:var(--red);border-radius:4px;padding:2px 7px;font-size:0.7rem;cursor:pointer;touch-action:manipulation">✕</button>
+        </span>
+      </div>`;
     }
     document.getElementById('listaGastosHoy').innerHTML = html;
     document.getElementById('totalGastosHoy').textContent = '-$' + total.toFixed(0);
@@ -915,19 +936,22 @@ async function renderHistorial() {
     return;
   }
 
-  const ventas = Object.values(val).sort((a, b) => {
-    if (a.fecha !== b.fecha) return b.fecha.localeCompare(a.fecha);
-    return b.hora.localeCompare(a.hora);
+  const ventasOrdenadas = Object.entries(val).sort((a, b) => {
+    if (a[1].fecha !== b[1].fecha) return b[1].fecha.localeCompare(a[1].fecha);
+    return b[1].hora.localeCompare(a[1].hora);
   }).slice(0, 30);
 
   let html = '';
-  for (const v of ventas) {
+  for (const [id, v] of ventasOrdenadas) {
     const det = v.detalle.map(d => `${d.qty}× ${d.nombre}`).join(', ');
     html += `
       <div class="registro-item">
         <div class="registro-header">
           <span class="registro-fecha">${formatFecha(v.fecha)} ${v.hora}</span>
-          <span class="registro-total">+$${v.total.toFixed(0)}</span>
+          <span style="display:flex;align-items:center;gap:8px">
+            <span class="registro-total">+$${v.total.toFixed(0)}</span>
+            <button onclick="pedirPin('venta','${id}')" style="background:none;border:1px solid var(--red);color:var(--red);border-radius:4px;padding:2px 7px;font-size:0.7rem;cursor:pointer;touch-action:manipulation">✕</button>
+          </span>
         </div>
         <div class="registro-detalle">${det}</div>
       </div>`;
@@ -1078,6 +1102,39 @@ async function guardarProducto() {
   document.getElementById('npPrecio').value = '';
   cerrarModal();
   toast('Producto agregado');
+}
+
+// ══════════════════════
+//  PIN Y BORRAR
+// ══════════════════════
+const PIN = '0101';
+let _pendienteEliminar = null;
+
+function pedirPin(tipo, id) {
+  _pendienteEliminar = { tipo, id };
+  document.getElementById('pinInput').value = '';
+  document.getElementById('modalPin').classList.add('open');
+  setTimeout(() => document.getElementById('pinInput').focus(), 200);
+}
+
+function cerrarModalPin() {
+  document.getElementById('modalPin').classList.remove('open');
+  _pendienteEliminar = null;
+}
+
+async function confirmarPin() {
+  const pin = document.getElementById('pinInput').value;
+  if (pin !== PIN) {
+    toast('PIN incorrecto');
+    document.getElementById('pinInput').value = '';
+    return;
+  }
+  cerrarModalPin();
+  if (!_pendienteEliminar) return;
+  const { tipo, id } = _pendienteEliminar;
+  await window._remove(window._ref(window._db, tipo === 'gasto' ? 'gastos/' + id : 'ventas/' + id));
+  toast('Registro eliminado');
+  if (tipo === 'venta') renderHistorial();
 }
 
 // ══════════════════════
