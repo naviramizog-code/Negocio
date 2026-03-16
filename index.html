@@ -78,6 +78,7 @@
     background: none;
     border: none;
     border-bottom: 2px solid transparent;
+    border-right: 1px solid var(--border);
     color: var(--muted);
     font-family: var(--font);
     font-size: 0.62rem;
@@ -85,14 +86,29 @@
     letter-spacing: 0.03em;
     text-transform: uppercase;
     cursor: pointer;
-    transition: color 0.2s, border-bottom 0.2s;
+    transition: color 0.2s, border-bottom 0.2s, background 0.15s;
     white-space: nowrap;
     text-align: center;
+    position: relative;
+  }
+
+  .tab:nth-child(4),
+  .tab:last-child {
+    border-right: none;
+  }
+
+  .tab:nth-child(n+5) {
+    border-top: 1px solid var(--border);
+  }
+
+  .tab:active {
+    background: var(--surface2);
   }
 
   .tab.active {
     color: var(--accent);
     border-bottom: 2px solid var(--accent);
+    background: var(--surface2);
   }
 
   /* SECTIONS */
