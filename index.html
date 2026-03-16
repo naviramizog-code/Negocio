@@ -545,7 +545,7 @@ window.dispatchEvent(new Event('firebaseReady'));
     <div class="card-title">Registrar venta</div>
     <div id="listaProductos"></div>
     <button class="btn-primary" onclick="guardarVenta()">✓ Registrar venta</button>
-    <button class="btn-secondary" onclick="resetVenta()">↺ Limpiar</button>
+    <button class="btn-secondary" onclick="pedirPin('limpiar','')">↺ Limpiar</button>
   </div>
 </div>
 
@@ -1260,11 +1260,16 @@ async function confirmarPin() {
     document.getElementById('pinInput').value = '';
     return;
   }
-  const pendiente = _pendienteEliminar; // guardar antes de cerrar
+  const pendiente = _pendienteEliminar;
   document.getElementById('modalPin').classList.remove('open');
   _pendienteEliminar = null;
   if (!pendiente) return;
   const { tipo, id } = pendiente;
+  if (tipo === 'limpiar') {
+    resetVenta();
+    toast('↺ Venta limpiada');
+    return;
+  }
   await window._remove(window._ref(window._db, tipo === 'gasto' ? 'gastos/' + id : 'ventas/' + id));
   toast('✓ Registro eliminado');
   if (tipo === 'venta') renderHistorial();
