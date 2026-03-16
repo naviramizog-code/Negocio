@@ -636,7 +636,7 @@ window.dispatchEvent(new Event('firebaseReady'));
     <div style="font-size:0.8rem;color:var(--muted);margin-bottom:14px">Solo el administrador puede eliminar registros</div>
     <div class="input-group">
       <label class="input-label">PIN</label>
-      <input type="password" id="pinInput" placeholder="••••" inputmode="numeric" maxlength="4" style="font-size:1.4rem;letter-spacing:0.3em;text-align:center">
+      <input type="password" id="pinInput" placeholder="••••" inputmode="numeric" maxlength="4" style="font-size:1.4rem;letter-spacing:0.3em;text-align:center" oninput="if(this.value.length===4) confirmarPin()">
     </div>
     <button class="btn-primary" onclick="confirmarPin()">Confirmar</button>
     <button class="btn-secondary" onclick="cerrarModalPin()">Cancelar</button>
@@ -1129,11 +1129,13 @@ async function confirmarPin() {
     document.getElementById('pinInput').value = '';
     return;
   }
-  cerrarModalPin();
-  if (!_pendienteEliminar) return;
-  const { tipo, id } = _pendienteEliminar;
+  const pendiente = _pendienteEliminar; // guardar antes de cerrar
+  document.getElementById('modalPin').classList.remove('open');
+  _pendienteEliminar = null;
+  if (!pendiente) return;
+  const { tipo, id } = pendiente;
   await window._remove(window._ref(window._db, tipo === 'gasto' ? 'gastos/' + id : 'ventas/' + id));
-  toast('Registro eliminado');
+  toast('✓ Registro eliminado');
   if (tipo === 'venta') renderHistorial();
 }
 
