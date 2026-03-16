@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html lang="es">
 <head>
 <meta charset="UTF-8">
@@ -64,33 +63,31 @@
   /* NAV TABS */
   .tabs {
     display: flex;
+    flex-wrap: wrap;
     background: var(--surface);
     border-bottom: 1px solid var(--border);
-    overflow-x: auto;
-    scrollbar-width: none;
     position: sticky;
     top: 57px;
     z-index: 99;
   }
 
-  .tabs::-webkit-scrollbar { display: none; }
-
   .tab {
-    flex: 1;
-    min-width: 80px;
-    padding: 12px 8px;
+    flex: 1 1 25%;
+    min-width: 0;
+    padding: 9px 4px;
     background: none;
     border: none;
+    border-bottom: 2px solid transparent;
     color: var(--muted);
     font-family: var(--font);
-    font-size: 0.72rem;
+    font-size: 0.62rem;
     font-weight: 600;
-    letter-spacing: 0.04em;
+    letter-spacing: 0.03em;
     text-transform: uppercase;
     cursor: pointer;
     transition: color 0.2s, border-bottom 0.2s;
-    border-bottom: 2px solid transparent;
     white-space: nowrap;
+    text-align: center;
   }
 
   .tab.active {
@@ -476,12 +473,10 @@
   /* Scroll suave */
   html { scroll-behavior: smooth; }
 </style>
-
 </head>
 <body>
 
 <!-- FIREBASE SDK -->
-
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getDatabase, ref, push, set, onValue, get, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
@@ -515,14 +510,12 @@ window.dispatchEvent(new Event('firebaseReady'));
 </script>
 
 <!-- HEADER -->
-
 <header>
   <div class="logo">NEGOCIO<span> control</span></div>
   <div class="fecha-hoy" id="fechaHoy"></div>
 </header>
 
 <!-- TABS -->
-
 <nav class="tabs">
   <button class="tab active" onclick="showTab('ventas')">🧾 Vender</button>
   <button class="tab" onclick="showTab('gastos')">💸 Gastos</button>
@@ -534,7 +527,6 @@ window.dispatchEvent(new Event('firebaseReady'));
 </nav>
 
 <!-- ══ TAB: VENTAS ══ -->
-
 <div class="section active" id="tab-ventas">
 
   <div class="stats-grid">
@@ -557,7 +549,6 @@ window.dispatchEvent(new Event('firebaseReady'));
 </div>
 
 <!-- ══ TAB: GASTOS ══ -->
-
 <div class="section" id="tab-gastos">
   <div class="card">
     <div class="card-title">Nuevo gasto</div>
@@ -583,7 +574,6 @@ window.dispatchEvent(new Event('firebaseReady'));
 </div>
 
 <!-- ══ TAB: HISTORIAL ══ -->
-
 <div class="section" id="tab-historial">
   <div class="card">
     <div class="card-title">Últimas ventas</div>
@@ -592,7 +582,6 @@ window.dispatchEvent(new Event('firebaseReady'));
 </div>
 
 <!-- ══ TAB: BALANCE ══ -->
-
 <div class="section" id="tab-balance">
   <div class="card">
     <div class="card-title">Balance semanal</div>
@@ -606,7 +595,6 @@ window.dispatchEvent(new Event('firebaseReady'));
 </div>
 
 <!-- ══ TAB: INVENTARIO ══ -->
-
 <div class="section" id="tab-inventario">
 
   <div class="card">
@@ -639,11 +627,9 @@ window.dispatchEvent(new Event('firebaseReady'));
 </div>
 
 <!-- ══ TAB: VASOS ══ -->
-
 <div class="section" id="tab-vasos">
 
   <!-- Existencia actual -->
-
   <div class="stats-grid">
     <div class="stat-box">
       <div class="stat-label">Vasos en existencia</div>
@@ -656,7 +642,6 @@ window.dispatchEvent(new Event('firebaseReady'));
   </div>
 
   <!-- Alerta si quedan pocos -->
-
   <div id="vasosAlerta" style="display:none;background:#2a1a0a;border:1px solid var(--accent2);border-radius:8px;padding:12px;margin-bottom:12px;font-size:0.82rem;color:var(--accent2)">
     ⚠️ Quedan pocos vasos — considera comprar más tiras
   </div>
@@ -681,7 +666,6 @@ window.dispatchEvent(new Event('firebaseReady'));
   </div>
 
   <!-- Historial de tiras -->
-
   <div class="card">
     <div class="card-title">Historial de compras de tiras</div>
     <div id="listaTiras"><div class="empty-state"><div class="icon">🥤</div>Sin registros</div></div>
@@ -690,7 +674,6 @@ window.dispatchEvent(new Event('firebaseReady'));
 </div>
 
 <!-- ══ TAB: CATÁLOGO ══ -->
-
 <div class="section" id="tab-catalogo">
   <div class="card">
     <div class="card-title">Productos registrados</div>
@@ -700,7 +683,6 @@ window.dispatchEvent(new Event('firebaseReady'));
 </div>
 
 <!-- MODAL NUEVO PRODUCTO -->
-
 <div class="modal-overlay" id="modalProducto">
   <div class="modal">
     <div class="modal-title">Nuevo producto</div>
@@ -727,7 +709,6 @@ window.dispatchEvent(new Event('firebaseReady'));
 </div>
 
 <!-- MODAL PIN -->
-
 <div class="modal-overlay" id="modalPin">
   <div class="modal">
     <div class="modal-title">🔐 PIN requerido</div>
@@ -742,7 +723,6 @@ window.dispatchEvent(new Event('firebaseReady'));
 </div>
 
 <!-- MODAL CIERRE DE CAJA -->
-
 <div class="modal-overlay" id="modalCierre">
   <div class="modal">
     <div style="text-align:center;margin-bottom:16px">
@@ -770,7 +750,6 @@ window.dispatchEvent(new Event('firebaseReady'));
 </div>
 
 <!-- TOAST -->
-
 <div class="toast" id="toast"></div>
 
 <script>
