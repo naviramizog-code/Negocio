@@ -523,6 +523,7 @@ window.dispatchEvent(new Event('firebaseReady'));
   <button class="tab" onclick="showTab('gastos')">💸 Gastos</button>
   <button class="tab" onclick="showTab('historial')">📋 Historial</button>
   <button class="tab" onclick="showTab('balance')">📊 Balance</button>
+  <button class="tab" onclick="showTab('vasos')">🥤 Vasos</button>
   <button class="tab" onclick="showTab('catalogo')">📦 Catálogo</button>
 </nav>
 
@@ -592,6 +593,53 @@ window.dispatchEvent(new Event('firebaseReady'));
     </div>
     <div id="balanceSemana"></div>
   </div>
+</div>
+
+<!-- ══ TAB: VASOS ══ -->
+<div class="section" id="tab-vasos">
+
+  <!-- Existencia actual -->
+  <div class="stats-grid">
+    <div class="stat-box">
+      <div class="stat-label">Vasos en existencia</div>
+      <div class="stat-value accent" id="vasosTotal">0</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-label">Tiras completas</div>
+      <div class="stat-value" id="vasosTiras">0</div>
+    </div>
+  </div>
+
+  <!-- Alerta si quedan pocos -->
+  <div id="vasosAlerta" style="display:none;background:#2a1a0a;border:1px solid var(--accent2);border-radius:8px;padding:12px;margin-bottom:12px;font-size:0.82rem;color:var(--accent2)">
+    ⚠️ Quedan pocos vasos — considera comprar más tiras
+  </div>
+
+  <div class="card">
+    <div class="card-title">Agregar tiras compradas</div>
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+      <div style="flex:1">
+        <div style="font-size:0.75rem;color:var(--muted);margin-bottom:4px">Cantidad de tiras</div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <button class="qty-btn" onclick="cambiarTirasNuevas(-1)">−</button>
+          <span class="qty-value" id="tirasNuevasQty" style="font-size:1.3rem">1</span>
+          <button class="qty-btn" onclick="cambiarTirasNuevas(1)">+</button>
+        </div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:0.7rem;color:var(--muted)">= piezas</div>
+        <div style="font-family:var(--mono);font-size:1.1rem;color:var(--accent)" id="tirasNuevasPiezas">50</div>
+      </div>
+    </div>
+    <button class="btn-primary" onclick="agregarTiras()">+ Agregar tiras</button>
+  </div>
+
+  <!-- Historial de tiras -->
+  <div class="card">
+    <div class="card-title">Historial de compras de tiras</div>
+    <div id="listaTiras"><div class="empty-state"><div class="icon">🥤</div>Sin registros</div></div>
+  </div>
+
 </div>
 
 <!-- ══ TAB: CATÁLOGO ══ -->
@@ -711,6 +759,7 @@ function showTab(name) {
   event.currentTarget.classList.add('active');
   if (name === 'balance') renderBalance();
   if (name === 'historial') renderHistorial();
+  if (name === 'vasos') renderVasos();
 }
 
 // ══════════════════════
@@ -1105,6 +1154,88 @@ async function guardarProducto() {
 }
 
 // ══════════════════════
+//  VASOS
+// ══════════════════════
+let _tirasNuevas = 1;
+
+function cambiarTirasNuevas(delta) {
+  _tirasNuevas = Math.max(1, _tirasNuevas + delta);
+  document.getElementById('tirasNuevasQty').textContent = _tirasNuevas;
+  document.getElementById('tirasNuevasPiezas').textContent = _tirasNuevas * 50;
+}
+
+async function agregarTiras() {
+  const piezas = _tirasNuevas * 50;
+  await dbPush('tiras', {
+    fecha: hoy(),
+    hora: new Date().toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' }),
+    tiras: _tirasNuevas,
+    piezas
+  });
+  _tirasNuevas = 1;
+  document.getElementById('tirasNuevasQty').textContent = 1;
+  document.getElementById('tirasNuevasPiezas').textContent = 50;
+  toast('✓ ' + _tirasNuevas * 50 || 50 + ' vasos agregados');
+  renderVasos();
+}
+
+async function descontarVaso(cantidad) {
+  // Obtener existencia actual y descontar
+  const data = await dbGet('vasos_existencia');
+  const actual = data ? data.total : 0;
+  const nuevo = Math.max(0, actual - cantidad);
+  await dbSet('vasos_existencia', { total: nuevo });
+}
+
+function renderVasos() {
+  dbListen('tiras', async val => {
+    // Calcular total comprado
+    let totalComprado = 0;
+    const tiras = val ? Object.values(val) : [];
+    for (const t of tiras) totalComprado += t.piezas;
+
+    // Calcular total vendido (raspados)
+    const ventas = await dbGet('ventas');
+    let totalVendido = 0;
+    if (ventas) {
+      for (const v of Object.values(ventas)) {
+        for (const d of v.detalle) {
+          if (d.nombre.toLowerCase().includes('raspado')) {
+            totalVendido += d.qty;
+          }
+        }
+      }
+    }
+
+    const existencia = totalComprado - totalVendido;
+    const tirasCompletas = Math.floor(existencia / 50);
+    const sueltos = existencia % 50;
+
+    document.getElementById('vasosTotal').textContent = existencia;
+    document.getElementById('vasosTiras').textContent = tirasCompletas + (sueltos > 0 ? ` +${sueltos}` : '');
+
+    // Alerta si quedan menos de 20
+    document.getElementById('vasosAlerta').style.display = existencia < 20 ? 'block' : 'none';
+
+    // Historial de tiras
+    if (!tiras.length) {
+      document.getElementById('listaTiras').innerHTML = '<div class="empty-state"><div class="icon">🥤</div>Sin registros</div>';
+      return;
+    }
+    const tirasOrdenadas = Object.values(val).sort((a, b) => b.fecha.localeCompare(a.fecha));
+    let html = '';
+    for (const t of tirasOrdenadas) {
+      html += `
+        <div class="balance-row">
+          <span class="label">${formatFecha(t.fecha)} ${t.hora}</span>
+          <span class="valor" style="color:var(--accent)">+${t.tiras} tira${t.tiras > 1 ? 's' : ''} (${t.piezas} pzas)</span>
+        </div>`;
+    }
+    document.getElementById('listaTiras').innerHTML = html;
+  });
+}
+
+// ══════════════════════
 //  PIN Y BORRAR
 // ══════════════════════
 const PIN = '0101';
@@ -1208,6 +1339,7 @@ function init() {
   renderGastosHoy();
   actualizarResumenHoy();
   renderBalance();
+  renderVasos();
   verificarCierreCaja();
 }
 
