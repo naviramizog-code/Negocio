@@ -628,6 +628,33 @@ window.dispatchEvent(new Event('firebaseReady'));
   </div>
 </div>
 
+<!-- MODAL CIERRE DE CAJA -->
+<div class="modal-overlay" id="modalCierre">
+  <div class="modal">
+    <div style="text-align:center;margin-bottom:16px">
+      <div style="font-size:2rem">🔒</div>
+      <div class="modal-title" style="text-align:center;margin-bottom:4px">Cierre de caja</div>
+      <div style="font-size:0.72rem;color:var(--muted);font-family:var(--mono)" id="cierreFecha"></div>
+    </div>
+    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:14px">
+      <div class="balance-row">
+        <span class="label">Total ventas</span>
+        <span class="valor" style="color:var(--green)" id="cierreVentas">$0</span>
+      </div>
+      <div class="balance-row">
+        <span class="label">Total gastos</span>
+        <span class="valor" style="color:var(--red)" id="cierreGastos">$0</span>
+      </div>
+      <div class="balance-row total" style="border-top:1px solid var(--border);margin-top:8px;padding-top:10px">
+        <span class="label">Neto del día</span>
+        <span class="valor" id="cierreNeto" style="font-size:1.3rem">$0</span>
+      </div>
+    </div>
+    <button class="btn-primary" onclick="confirmarCierre()">✓ Cerrar caja del día</button>
+    <button class="btn-secondary" onclick="posponerCierre()">Después</button>
+  </div>
+</div>
+
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
 
@@ -971,21 +998,26 @@ async function renderBalance() {
 
   const neto = totalVentas - totalGastos;
 
+  // Obtener cierres de la semana
+  const cierres = await dbGet('cierres');
+
   let html = '';
-  for (const [, dia] of Object.entries(resumenDias)) {
-    if (dia.ventas === 0 && dia.gastos === 0) continue;
-    html += `
-      <div class="balance-row">
-        <span class="label">${dia.label}</span>
-        <span class="valor" style="color:var(--green)">+$${dia.ventas.toFixed(0)}</span>
-      </div>`;
-    if (dia.gastos > 0) {
+  for (const [fecha, dia] of Object.entries(resumenDias)) {
+      if (dia.ventas === 0 && dia.gastos === 0) continue;
+      const cerrado = cierres && cierres[fecha];
+      const netoDia = dia.ventas - dia.gastos;
       html += `
-        <div class="balance-row" style="padding-left:12px">
-          <span class="label" style="font-size:0.72rem">  Gastos</span>
-          <span class="valor" style="color:var(--red)">-$${dia.gastos.toFixed(0)}</span>
+        <div class="balance-row">
+          <span class="label">${dia.label} ${cerrado ? '<span style="color:var(--green);font-size:0.6rem">✓ cerrado</span>' : '<span style="color:var(--muted);font-size:0.6rem">abierto</span>'}</span>
+          <span class="valor" style="color:${netoDia >= 0 ? 'var(--green)' : 'var(--red)'}">$${netoDia.toFixed(0)}</span>
         </div>`;
-    }
+      if (dia.gastos > 0) {
+        html += `
+          <div class="balance-row" style="padding-left:12px">
+            <span class="label" style="font-size:0.72rem">Gastos</span>
+            <span class="valor" style="color:var(--red)">-$${dia.gastos.toFixed(0)}</span>
+          </div>`;
+      }
   }
 
   if (!html) {
@@ -999,7 +1031,7 @@ async function renderBalance() {
         <span class="label">Total gastos</span><span class="valor" style="color:var(--red)">-$${totalGastos.toFixed(0)}</span>
       </div>
       <div class="balance-row total">
-        <span class="label">Neto</span>
+        <span class="label">Neto semana</span>
         <span class="valor" style="color:${neto >= 0 ? 'var(--green)' : 'var(--red)'}">$${neto.toFixed(0)}</span>
       </div>`;
   }
@@ -1049,6 +1081,66 @@ async function guardarProducto() {
 }
 
 // ══════════════════════
+//  CIERRE DE CAJA
+// ══════════════════════
+async function verificarCierreCaja() {
+  const now = new Date();
+  const hora = now.getHours();
+  if (hora < 19) return; // antes de las 7pm no hace nada
+
+  const hoyStr = hoy();
+  const cierre = await dbGet('cierres/' + hoyStr);
+  if (cierre) return; // ya se cerró hoy
+
+  // Calcular totales del día
+  const [ventas, gastos] = await Promise.all([dbGet('ventas'), dbGet('gastos')]);
+  let totalVentas = 0, totalGastos = 0;
+
+  if (ventas) {
+    for (const v of Object.values(ventas)) {
+      if (v.fecha === hoyStr) totalVentas += v.total;
+    }
+  }
+  if (gastos) {
+    for (const g of Object.values(gastos)) {
+      if (g.fecha === hoyStr) totalGastos += g.monto;
+    }
+  }
+
+  const neto = totalVentas - totalGastos;
+
+  // Mostrar popup
+  document.getElementById('cierreFecha').textContent = formatFecha(hoyStr);
+  document.getElementById('cierreVentas').textContent = '$' + totalVentas.toFixed(0);
+  document.getElementById('cierreGastos').textContent = '-$' + totalGastos.toFixed(0);
+  const netoEl = document.getElementById('cierreNeto');
+  netoEl.textContent = '$' + neto.toFixed(0);
+  netoEl.style.color = neto >= 0 ? 'var(--green)' : 'var(--red)';
+
+  // Guardar datos para confirmar después
+  window._cierrePendiente = { fecha: hoyStr, totalVentas, totalGastos, neto };
+
+  document.getElementById('modalCierre').classList.add('open');
+}
+
+async function confirmarCierre() {
+  const data = window._cierrePendiente;
+  if (!data) return;
+  await dbSet('cierres/' + data.fecha, {
+    ...data,
+    hora: new Date().toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })
+  });
+  document.getElementById('modalCierre').classList.remove('open');
+  toast('✓ Caja cerrada — Neto: $' + data.neto.toFixed(0));
+}
+
+function posponerCierre() {
+  document.getElementById('modalCierre').classList.remove('open');
+  // Recordar en 30 minutos
+  setTimeout(verificarCierreCaja, 30 * 60 * 1000);
+}
+
+// ══════════════════════
 //  INIT
 // ══════════════════════
 function init() {
@@ -1057,6 +1149,7 @@ function init() {
   renderGastosHoy();
   actualizarResumenHoy();
   renderBalance();
+  verificarCierreCaja();
 }
 
 // Esperar Firebase
