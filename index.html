@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html lang="es">
 <head>
 <meta charset="UTF-8">
@@ -475,10 +476,12 @@
   /* Scroll suave */
   html { scroll-behavior: smooth; }
 </style>
+
 </head>
 <body>
 
 <!-- FIREBASE SDK -->
+
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getDatabase, ref, push, set, onValue, get, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
@@ -512,22 +515,26 @@ window.dispatchEvent(new Event('firebaseReady'));
 </script>
 
 <!-- HEADER -->
+
 <header>
   <div class="logo">NEGOCIO<span> control</span></div>
   <div class="fecha-hoy" id="fechaHoy"></div>
 </header>
 
 <!-- TABS -->
+
 <nav class="tabs">
   <button class="tab active" onclick="showTab('ventas')">🧾 Vender</button>
   <button class="tab" onclick="showTab('gastos')">💸 Gastos</button>
   <button class="tab" onclick="showTab('historial')">📋 Historial</button>
   <button class="tab" onclick="showTab('balance')">📊 Balance</button>
+  <button class="tab" onclick="showTab('inventario')">📦 Inventario</button>
   <button class="tab" onclick="showTab('vasos')">🥤 Vasos</button>
-  <button class="tab" onclick="showTab('catalogo')">📦 Catálogo</button>
+  <button class="tab" onclick="showTab('catalogo')">⚙️ Catálogo</button>
 </nav>
 
 <!-- ══ TAB: VENTAS ══ -->
+
 <div class="section active" id="tab-ventas">
 
   <div class="stats-grid">
@@ -550,6 +557,7 @@ window.dispatchEvent(new Event('firebaseReady'));
 </div>
 
 <!-- ══ TAB: GASTOS ══ -->
+
 <div class="section" id="tab-gastos">
   <div class="card">
     <div class="card-title">Nuevo gasto</div>
@@ -575,6 +583,7 @@ window.dispatchEvent(new Event('firebaseReady'));
 </div>
 
 <!-- ══ TAB: HISTORIAL ══ -->
+
 <div class="section" id="tab-historial">
   <div class="card">
     <div class="card-title">Últimas ventas</div>
@@ -583,6 +592,7 @@ window.dispatchEvent(new Event('firebaseReady'));
 </div>
 
 <!-- ══ TAB: BALANCE ══ -->
+
 <div class="section" id="tab-balance">
   <div class="card">
     <div class="card-title">Balance semanal</div>
@@ -595,10 +605,45 @@ window.dispatchEvent(new Event('firebaseReady'));
   </div>
 </div>
 
+<!-- ══ TAB: INVENTARIO ══ -->
+
+<div class="section" id="tab-inventario">
+
+  <div class="card">
+    <div class="card-title">Existencias actuales</div>
+    <div id="listaInventario"><div class="empty-state"><div class="icon">📦</div>Cargando...</div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Entrada de mercancía</div>
+    <div class="input-group">
+      <label class="input-label">Producto</label>
+      <select id="entradaProducto"></select>
+    </div>
+    <div class="input-group">
+      <label class="input-label">Cantidad que llegó</label>
+      <div style="display:flex;align-items:center;gap:12px;margin-top:4px">
+        <button class="qty-btn" onclick="cambiarEntrada(-1)">−</button>
+        <span class="qty-value" id="entradaQty" style="font-size:1.3rem">1</span>
+        <button class="qty-btn" onclick="cambiarEntrada(1)">+</button>
+      </div>
+    </div>
+    <button class="btn-primary" onclick="registrarEntrada()">+ Registrar entrada</button>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Historial de entradas</div>
+    <div id="listaEntradas"><div class="empty-state"><div class="icon">📥</div>Sin entradas</div></div>
+  </div>
+
+</div>
+
 <!-- ══ TAB: VASOS ══ -->
+
 <div class="section" id="tab-vasos">
 
   <!-- Existencia actual -->
+
   <div class="stats-grid">
     <div class="stat-box">
       <div class="stat-label">Vasos en existencia</div>
@@ -611,6 +656,7 @@ window.dispatchEvent(new Event('firebaseReady'));
   </div>
 
   <!-- Alerta si quedan pocos -->
+
   <div id="vasosAlerta" style="display:none;background:#2a1a0a;border:1px solid var(--accent2);border-radius:8px;padding:12px;margin-bottom:12px;font-size:0.82rem;color:var(--accent2)">
     ⚠️ Quedan pocos vasos — considera comprar más tiras
   </div>
@@ -635,6 +681,7 @@ window.dispatchEvent(new Event('firebaseReady'));
   </div>
 
   <!-- Historial de tiras -->
+
   <div class="card">
     <div class="card-title">Historial de compras de tiras</div>
     <div id="listaTiras"><div class="empty-state"><div class="icon">🥤</div>Sin registros</div></div>
@@ -643,6 +690,7 @@ window.dispatchEvent(new Event('firebaseReady'));
 </div>
 
 <!-- ══ TAB: CATÁLOGO ══ -->
+
 <div class="section" id="tab-catalogo">
   <div class="card">
     <div class="card-title">Productos registrados</div>
@@ -652,6 +700,7 @@ window.dispatchEvent(new Event('firebaseReady'));
 </div>
 
 <!-- MODAL NUEVO PRODUCTO -->
+
 <div class="modal-overlay" id="modalProducto">
   <div class="modal">
     <div class="modal-title">Nuevo producto</div>
@@ -678,6 +727,7 @@ window.dispatchEvent(new Event('firebaseReady'));
 </div>
 
 <!-- MODAL PIN -->
+
 <div class="modal-overlay" id="modalPin">
   <div class="modal">
     <div class="modal-title">🔐 PIN requerido</div>
@@ -692,6 +742,7 @@ window.dispatchEvent(new Event('firebaseReady'));
 </div>
 
 <!-- MODAL CIERRE DE CAJA -->
+
 <div class="modal-overlay" id="modalCierre">
   <div class="modal">
     <div style="text-align:center;margin-bottom:16px">
@@ -719,6 +770,7 @@ window.dispatchEvent(new Event('firebaseReady'));
 </div>
 
 <!-- TOAST -->
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -760,6 +812,7 @@ function showTab(name) {
   if (name === 'balance') renderBalance();
   if (name === 'historial') renderHistorial();
   if (name === 'vasos') renderVasos();
+  if (name === 'inventario') renderInventario();
 }
 
 // ══════════════════════
@@ -895,7 +948,7 @@ async function guardarVenta() {
 
   const detalle = items.map(([id, qty]) => {
     const p = productos.find(x => x.id === id);
-    return p ? { nombre: p.nombre, qty, subtotal: qty * p.precio } : null;
+    return p ? { id, nombre: p.nombre, qty, subtotal: qty * p.precio } : null;
   }).filter(Boolean);
 
   const total = detalle.reduce((a, b) => a + b.subtotal, 0);
@@ -908,6 +961,15 @@ async function guardarVenta() {
   };
 
   await dbPush('ventas', venta);
+
+  // Descontar del inventario por cada producto vendido
+  for (const d of detalle) {
+    const snapPath = 'inventario/' + d.id;
+    const actual = await dbGet(snapPath);
+    const existencia = actual ? (actual.existencia || 0) : 0;
+    await dbSet(snapPath, { existencia: Math.max(0, existencia - d.qty) });
+  }
+
   toast('✓ Venta registrada — $' + total);
   resetVenta();
   actualizarResumenHoy();
@@ -1154,6 +1216,114 @@ async function guardarProducto() {
 }
 
 // ══════════════════════
+//  INVENTARIO
+// ══════════════════════
+let _entradaQty = 1;
+
+function cambiarEntrada(delta) {
+  _entradaQty = Math.max(1, _entradaQty + delta);
+  document.getElementById('entradaQty').textContent = _entradaQty;
+}
+
+function renderSelectProductos() {
+  const sel = document.getElementById('entradaProducto');
+  if (!sel) return;
+  sel.innerHTML = productos.map(p => `<option value="${p.id}">${p.nombre}</option>`).join('');
+}
+
+async function registrarEntrada() {
+  const sel = document.getElementById('entradaProducto');
+  const id = sel.value;
+  const p = productos.find(x => x.id === id);
+  if (!p) { toast('Selecciona un producto'); return; }
+
+  // Actualizar existencia
+  const actual = await dbGet('inventario/' + id);
+  const existencia = actual ? (actual.existencia || 0) : 0;
+  await dbSet('inventario/' + id, { existencia: existencia + _entradaQty });
+
+  // Registrar en historial de entradas
+  await dbPush('entradas', {
+    fecha: hoy(),
+    hora: new Date().toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' }),
+    productoId: id,
+    nombre: p.nombre,
+    cantidad: _entradaQty
+  });
+
+  toast('✓ +' + _entradaQty + ' ' + p.nombre);
+  _entradaQty = 1;
+  document.getElementById('entradaQty').textContent = 1;
+  renderInventario();
+}
+
+function renderInventario() {
+  dbListen('inventario', val => {
+    if (!productos.length) return;
+
+    // Actualizar select
+    renderSelectProductos();
+
+    // Renderizar lista de existencias
+    const cats = {};
+    for (const p of productos) {
+      if (!cats[p.categoria]) cats[p.categoria] = [];
+      const existencia = val && val[p.id] ? (val[p.id].existencia || 0) : 0;
+      cats[p.categoria].push({ ...p, existencia });
+    }
+
+    let html = '';
+    for (const [cat, prods] of Object.entries(cats)) {
+      html += `<div class="cat-separator">${cat}</div>`;
+      for (const p of prods) {
+        const color = p.existencia <= 3 ? 'var(--red)' : p.existencia <= 10 ? 'var(--accent)' : 'var(--green)';
+        const alerta = p.existencia <= 3 ? ' ⚠️' : '';
+        html += `
+          <div class="product-row">
+            <div class="product-info">
+              <div class="product-name">${p.nombre}${alerta}</div>
+              <div class="product-price">$${p.precio}</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px">
+              <span style="font-family:var(--mono);font-size:1.1rem;color:${color};font-weight:500">${p.existencia}</span>
+              <button onclick="entradaRapida('${p.id}')" style="background:var(--surface2);border:1px solid var(--border);color:var(--accent);border-radius:6px;padding:4px 10px;font-size:0.8rem;cursor:pointer;touch-action:manipulation;font-family:var(--font)">+</button>
+            </div>
+          </div>`;
+      }
+    }
+    document.getElementById('listaInventario').innerHTML = html || '<div class="empty-state">Sin productos</div>';
+  });
+
+  // Historial de entradas
+  dbListen('entradas', val => {
+    if (!val) {
+      document.getElementById('listaEntradas').innerHTML = '<div class="empty-state"><div class="icon">📥</div>Sin entradas</div>';
+      return;
+    }
+    const entradas = Object.values(val).sort((a, b) => b.fecha.localeCompare(a.fecha) || b.hora.localeCompare(a.hora)).slice(0, 30);
+    let html = '';
+    for (const e of entradas) {
+      html += `
+        <div class="balance-row">
+          <span class="label">${e.nombre}<br><span style="font-size:0.65rem">${formatFecha(e.fecha)} ${e.hora}</span></span>
+          <span class="valor" style="color:var(--green)">+${e.cantidad}</span>
+        </div>`;
+    }
+    document.getElementById('listaEntradas').innerHTML = html;
+  });
+}
+
+function entradaRapida(id) {
+  const sel = document.getElementById('entradaProducto');
+  if (sel) sel.value = id;
+  _entradaQty = 1;
+  document.getElementById('entradaQty').textContent = 1;
+  // Scroll al formulario de entrada
+  document.querySelector('#tab-inventario .card:nth-child(2)').scrollIntoView({ behavior: 'smooth' });
+  toast('Seleccionado — ajusta cantidad y confirma');
+}
+
+// ══════════════════════
 //  VASOS
 // ══════════════════════
 let _tirasNuevas = 1;
@@ -1345,6 +1515,7 @@ function init() {
   actualizarResumenHoy();
   renderBalance();
   renderVasos();
+  renderInventario();
   verificarCierreCaja();
 }
 
