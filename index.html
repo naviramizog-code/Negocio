@@ -1,0 +1,1071 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Control del Negocio</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --bg: #0d0d0d;
+    --surface: #161616;
+    --surface2: #1f1f1f;
+    --border: #2a2a2a;
+    --accent: #f0c040;
+    --accent2: #e05a2b;
+    --green: #4caf7d;
+    --red: #e05a5a;
+    --text: #f0ede8;
+    --muted: #6b6b6b;
+    --font: 'Syne', sans-serif;
+    --mono: 'DM Mono', monospace;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* HEADER */
+  header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .logo {
+    font-size: 1.1rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: var(--accent);
+  }
+
+  .logo span { color: var(--text); font-weight: 400; }
+
+  .fecha-hoy {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    color: var(--muted);
+  }
+
+  /* NAV TABS */
+  .tabs {
+    display: flex;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    overflow-x: auto;
+    scrollbar-width: none;
+    position: sticky;
+    top: 57px;
+    z-index: 99;
+  }
+
+  .tabs::-webkit-scrollbar { display: none; }
+
+  .tab {
+    flex: 1;
+    min-width: 80px;
+    padding: 12px 8px;
+    background: none;
+    border: none;
+    color: var(--muted);
+    font-family: var(--font);
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: color 0.2s, border-bottom 0.2s;
+    border-bottom: 2px solid transparent;
+    white-space: nowrap;
+  }
+
+  .tab.active {
+    color: var(--accent);
+    border-bottom: 2px solid var(--accent);
+  }
+
+  /* SECTIONS */
+  .section { display: none; padding: 16px; }
+  .section.active { display: block; }
+
+  /* CARDS */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px;
+    margin-bottom: 12px;
+  }
+
+  .card-title {
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 12px;
+  }
+
+  /* RESUMEN DEL DÍA */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+
+  .stat-box {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px;
+  }
+
+  .stat-label {
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 4px;
+  }
+
+  .stat-value {
+    font-family: var(--mono);
+    font-size: 1.4rem;
+    font-weight: 500;
+    color: var(--text);
+  }
+
+  .stat-value.green { color: var(--green); }
+  .stat-value.red { color: var(--red); }
+  .stat-value.accent { color: var(--accent); }
+
+  /* PRODUCTOS LISTA */
+  .product-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 11px 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .product-row:last-child { border-bottom: none; }
+
+  .product-info { flex: 1; }
+
+  .product-name {
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 2px;
+  }
+
+  .product-price {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    color: var(--accent);
+  }
+
+  .qty-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .qty-btn {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    color: var(--text);
+    font-size: 1.1rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s, border-color 0.15s;
+    touch-action: manipulation;
+  }
+
+  .qty-btn:active { background: var(--accent); color: #000; }
+
+  .qty-value {
+    font-family: var(--mono);
+    font-size: 1rem;
+    min-width: 24px;
+    text-align: center;
+    color: var(--text);
+  }
+
+  /* BOTÓN PRINCIPAL */
+  .btn-primary {
+    width: 100%;
+    padding: 14px;
+    background: var(--accent);
+    color: #000;
+    border: none;
+    border-radius: 8px;
+    font-family: var(--font);
+    font-size: 0.85rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    cursor: pointer;
+    margin-top: 8px;
+    transition: opacity 0.15s;
+    touch-action: manipulation;
+  }
+
+  .btn-primary:active { opacity: 0.8; }
+
+  .btn-secondary {
+    width: 100%;
+    padding: 12px;
+    background: transparent;
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-family: var(--font);
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 8px;
+    transition: border-color 0.15s;
+    touch-action: manipulation;
+  }
+
+  .btn-secondary:active { border-color: var(--accent); }
+
+  /* INPUTS */
+  .input-group { margin-bottom: 10px; }
+
+  .input-label {
+    display: block;
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 5px;
+  }
+
+  input, select, textarea {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    color: var(--text);
+    font-family: var(--font);
+    font-size: 0.9rem;
+    padding: 10px 12px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+
+  input:focus, select:focus, textarea:focus {
+    border-color: var(--accent);
+  }
+
+  select option { background: var(--surface2); }
+
+  /* HISTORIAL */
+  .registro-item {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 8px;
+  }
+
+  .registro-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+
+  .registro-fecha {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    color: var(--muted);
+  }
+
+  .registro-total {
+    font-family: var(--mono);
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--green);
+  }
+
+  .registro-detalle {
+    font-size: 0.75rem;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+
+  /* BALANCE */
+  .balance-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.82rem;
+  }
+
+  .balance-row:last-child { border-bottom: none; }
+
+  .balance-row.total {
+    font-size: 1rem;
+    font-weight: 700;
+    margin-top: 4px;
+    padding-top: 12px;
+    border-top: 2px solid var(--border);
+    border-bottom: none;
+  }
+
+  .balance-row .label { color: var(--muted); }
+  .balance-row .valor { font-family: var(--mono); }
+  .balance-row.total .label { color: var(--text); }
+
+  /* GASTOS */
+  .gasto-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.82rem;
+  }
+
+  .gasto-item:last-child { border-bottom: none; }
+  .gasto-desc { flex: 1; color: var(--text); }
+  .gasto-monto { font-family: var(--mono); color: var(--red); margin-left: 12px; }
+
+  /* BADGE */
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .badge-cat {
+    background: var(--surface2);
+    color: var(--muted);
+    border: 1px solid var(--border);
+    margin-left: 6px;
+  }
+
+  /* TOAST */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: var(--accent);
+    color: #000;
+    font-family: var(--font);
+    font-size: 0.8rem;
+    font-weight: 700;
+    padding: 10px 20px;
+    border-radius: 40px;
+    z-index: 999;
+    transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+    white-space: nowrap;
+  }
+
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* MODAL ADD PRODUCT */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.8);
+    z-index: 200;
+    align-items: flex-end;
+  }
+
+  .modal-overlay.open { display: flex; }
+
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px 16px 0 0;
+    padding: 20px 16px 32px;
+    width: 100%;
+    max-height: 85vh;
+    overflow-y: auto;
+  }
+
+  .modal-title {
+    font-size: 1rem;
+    font-weight: 800;
+    margin-bottom: 16px;
+    color: var(--accent);
+  }
+
+  /* SEMANA SELECTOR */
+  .week-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+  }
+
+  .week-nav button {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-family: var(--font);
+    font-size: 0.8rem;
+    cursor: pointer;
+    touch-action: manipulation;
+  }
+
+  .week-label {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    color: var(--muted);
+    text-align: center;
+  }
+
+  /* CATEGORÍA SEPARATOR */
+  .cat-separator {
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent2);
+    padding: 8px 0 4px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 4px;
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--muted);
+    font-size: 0.85rem;
+  }
+
+  .empty-state .icon { font-size: 2rem; margin-bottom: 8px; }
+
+  /* Scroll suave */
+  html { scroll-behavior: smooth; }
+</style>
+</head>
+<body>
+
+<!-- FIREBASE SDK -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, push, set, onValue, get } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+// ══════════════════════════════════════════════
+//  🔥 CONFIGURA AQUÍ TU FIREBASE
+//  Reemplaza estos valores con los de tu proyecto
+// ══════════════════════════════════════════════
+const firebaseConfig = {
+  apiKey: "AIzaSyAp9gZCCwNxbhsR0gCZGpD6Vk0rFPV0EQg",
+  authDomain: "ventas-1243c.firebaseapp.com",
+  databaseURL: "https://ventas-1243c-default-rtdb.firebaseio.com",
+  projectId: "ventas-1243c",
+  storageBucket: "ventas-1243c.firebasestorage.app",
+  messagingSenderId: "396234967564",
+  appId: "1:396234967564:web:7c17ff370b6ce2b0c17c29",
+  measurementId: "G-XGY2FG7N4K"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+window._db = db;
+window._ref = ref;
+window._push = push;
+window._set = set;
+window._onValue = onValue;
+window._get = get;
+window._firebaseReady = true;
+window.dispatchEvent(new Event('firebaseReady'));
+</script>
+
+<!-- HEADER -->
+<header>
+  <div class="logo">NEGOCIO<span> control</span></div>
+  <div class="fecha-hoy" id="fechaHoy"></div>
+</header>
+
+<!-- TABS -->
+<nav class="tabs">
+  <button class="tab active" onclick="showTab('ventas')">🧾 Vender</button>
+  <button class="tab" onclick="showTab('gastos')">💸 Gastos</button>
+  <button class="tab" onclick="showTab('historial')">📋 Historial</button>
+  <button class="tab" onclick="showTab('balance')">📊 Balance</button>
+  <button class="tab" onclick="showTab('catalogo')">📦 Catálogo</button>
+</nav>
+
+<!-- ══ TAB: VENTAS ══ -->
+<div class="section active" id="tab-ventas">
+
+  <div class="stats-grid">
+    <div class="stat-box">
+      <div class="stat-label">Vendido hoy</div>
+      <div class="stat-value accent" id="totalHoy">$0</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-label">Piezas</div>
+      <div class="stat-value" id="piezasHoy">0</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Registrar venta</div>
+    <div id="listaProductos"></div>
+    <button class="btn-primary" onclick="guardarVenta()">✓ Registrar venta</button>
+    <button class="btn-secondary" onclick="resetVenta()">↺ Limpiar</button>
+  </div>
+</div>
+
+<!-- ══ TAB: GASTOS ══ -->
+<div class="section" id="tab-gastos">
+  <div class="card">
+    <div class="card-title">Nuevo gasto</div>
+    <div class="input-group">
+      <label class="input-label">Descripción</label>
+      <input type="text" id="gastoDesc" placeholder="Ej: Compra de refrescos, desayuno...">
+    </div>
+    <div class="input-group">
+      <label class="input-label">Monto ($)</label>
+      <input type="number" id="gastoMonto" placeholder="0.00" inputmode="decimal">
+    </div>
+    <button class="btn-primary" onclick="guardarGasto()">+ Agregar gasto</button>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Gastos de hoy</div>
+    <div id="listaGastosHoy"><div class="empty-state"><div class="icon">💸</div>Sin gastos registrados</div></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
+      <span style="font-size:0.8rem;color:var(--muted);">Total gastos</span>
+      <span class="balance-row" style="font-family:var(--mono);color:var(--red);font-size:1rem;border:none;padding:0" id="totalGastosHoy">$0</span>
+    </div>
+  </div>
+</div>
+
+<!-- ══ TAB: HISTORIAL ══ -->
+<div class="section" id="tab-historial">
+  <div class="card">
+    <div class="card-title">Últimas ventas</div>
+    <div id="listaHistorial"><div class="empty-state"><div class="icon">📋</div>Sin registros aún</div></div>
+  </div>
+</div>
+
+<!-- ══ TAB: BALANCE ══ -->
+<div class="section" id="tab-balance">
+  <div class="card">
+    <div class="card-title">Balance semanal</div>
+    <div class="week-nav">
+      <button onclick="cambiarSemana(-1)">◀ Ant.</button>
+      <div class="week-label" id="semanaLabel"></div>
+      <button onclick="cambiarSemana(1)">Sig. ▶</button>
+    </div>
+    <div id="balanceSemana"></div>
+  </div>
+</div>
+
+<!-- ══ TAB: CATÁLOGO ══ -->
+<div class="section" id="tab-catalogo">
+  <div class="card">
+    <div class="card-title">Productos registrados</div>
+    <div id="listaCatalogo"></div>
+    <button class="btn-primary" onclick="abrirModalProducto()">+ Agregar producto</button>
+  </div>
+</div>
+
+<!-- MODAL NUEVO PRODUCTO -->
+<div class="modal-overlay" id="modalProducto">
+  <div class="modal">
+    <div class="modal-title">Nuevo producto</div>
+    <div class="input-group">
+      <label class="input-label">Nombre</label>
+      <input type="text" id="npNombre" placeholder="Ej: Coca-Cola 600ml">
+    </div>
+    <div class="input-group">
+      <label class="input-label">Categoría</label>
+      <select id="npCategoria">
+        <option value="Agua">Agua</option>
+        <option value="Refresco">Refresco</option>
+        <option value="Raspado">Raspado</option>
+        <option value="Otro">Otro</option>
+      </select>
+    </div>
+    <div class="input-group">
+      <label class="input-label">Precio de venta ($)</label>
+      <input type="number" id="npPrecio" placeholder="0.00" inputmode="decimal">
+    </div>
+    <button class="btn-primary" onclick="guardarProducto()">Guardar producto</button>
+    <button class="btn-secondary" onclick="cerrarModal()">Cancelar</button>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ══════════════════════
+//  ESTADO LOCAL
+// ══════════════════════
+let productos = [];
+let ventaActual = {}; // {id: cantidad}
+let semanaOffset = 0;
+
+// ══════════════════════
+//  FECHA HELPERS
+// ══════════════════════
+function hoy() {
+  return new Date().toISOString().split('T')[0];
+}
+
+function formatFecha(iso) {
+  const [y,m,d] = iso.split('-');
+  return `${d}/${m}/${y}`;
+}
+
+function iniciarFecha() {
+  const now = new Date();
+  const dias = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+  const meses = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  document.getElementById('fechaHoy').textContent =
+    `${dias[now.getDay()]} ${now.getDate()} ${meses[now.getMonth()]}`;
+}
+
+// ══════════════════════
+//  TABS
+// ══════════════════════
+function showTab(name) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  event.currentTarget.classList.add('active');
+  if (name === 'balance') renderBalance();
+  if (name === 'historial') renderHistorial();
+}
+
+// ══════════════════════
+//  TOAST
+// ══════════════════════
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+// ══════════════════════
+//  FIREBASE WRAPPER
+// ══════════════════════
+function dbRef(path) {
+  return window._ref(window._db, path);
+}
+
+async function dbPush(path, data) {
+  return await window._push(dbRef(path), data);
+}
+
+async function dbSet(path, data) {
+  return await window._set(dbRef(path), data);
+}
+
+function dbListen(path, cb) {
+  window._onValue(dbRef(path), snap => cb(snap.val()));
+}
+
+async function dbGet(path) {
+  const snap = await window._get(dbRef(path));
+  return snap.val();
+}
+
+// ══════════════════════
+//  PRODUCTOS DEFAULTS
+// ══════════════════════
+const defaultProductos = [
+  { nombre: "Raspado", categoria: "Raspado", precio: 30 },
+  { nombre: "Agua chica genérica", categoria: "Agua", precio: 7 },
+  { nombre: "Agua litro genérica", categoria: "Agua", precio: 12 },
+  { nombre: "Agua litro Ciel", categoria: "Agua", precio: 17 },
+  { nombre: "Agua litro Bonafont", categoria: "Agua", precio: 19 },
+  { nombre: "Refresco de sabor", categoria: "Refresco", precio: 24 },
+  { nombre: "Coca-Cola 600ml", categoria: "Refresco", precio: 25 },
+  { nombre: "Coca-Cola Cristal", categoria: "Refresco", precio: 22 },
+  { nombre: "Coca-Cola 355ml", categoria: "Refresco", precio: 18 },
+];
+
+async function cargarProductos() {
+  const data = await dbGet('productos');
+  if (!data) {
+    // Cargar defaults
+    for (const p of defaultProductos) {
+      await dbPush('productos', p);
+    }
+  }
+  dbListen('productos', val => {
+    if (!val) { productos = []; return; }
+    productos = Object.entries(val).map(([id, d]) => ({ id, ...d }));
+    renderProductos();
+    renderCatalogo();
+  });
+}
+
+// ══════════════════════
+//  RENDER PRODUCTOS (VENTA)
+// ══════════════════════
+function renderProductos() {
+  const cats = {};
+  for (const p of productos) {
+    if (!cats[p.categoria]) cats[p.categoria] = [];
+    cats[p.categoria].push(p);
+  }
+
+  let html = '';
+  for (const [cat, prods] of Object.entries(cats)) {
+    html += `<div class="cat-separator">${cat}</div>`;
+    for (const p of prods) {
+      const qty = ventaActual[p.id] || 0;
+      html += `
+        <div class="product-row">
+          <div class="product-info">
+            <div class="product-name">${p.nombre}</div>
+            <div class="product-price">$${p.precio}</div>
+          </div>
+          <div class="qty-controls">
+            <button class="qty-btn" onclick="cambiarQty('${p.id}', -1)">−</button>
+            <span class="qty-value" id="qty-${p.id}">${qty}</span>
+            <button class="qty-btn" onclick="cambiarQty('${p.id}', 1)">+</button>
+          </div>
+        </div>`;
+    }
+  }
+
+  document.getElementById('listaProductos').innerHTML = html || '<div class="empty-state">Sin productos</div>';
+  actualizarTotalesVenta();
+}
+
+function cambiarQty(id, delta) {
+  const actual = ventaActual[id] || 0;
+  const nuevo = Math.max(0, actual + delta);
+  if (nuevo === 0) delete ventaActual[id]; else ventaActual[id] = nuevo;
+  const el = document.getElementById('qty-' + id);
+  if (el) el.textContent = nuevo;
+  actualizarTotalesVenta();
+}
+
+function actualizarTotalesVenta() {
+  let total = 0, piezas = 0;
+  for (const p of productos) {
+    const q = ventaActual[p.id] || 0;
+    total += q * p.precio;
+    piezas += q;
+  }
+  document.getElementById('totalHoy').textContent = '$' + total.toFixed(0);
+  document.getElementById('piezasHoy').textContent = piezas;
+}
+
+function resetVenta() {
+  ventaActual = {};
+  renderProductos();
+}
+
+// ══════════════════════
+//  GUARDAR VENTA
+// ══════════════════════
+async function guardarVenta() {
+  const items = Object.entries(ventaActual);
+  if (!items.length) { toast('Agrega productos primero'); return; }
+
+  const detalle = items.map(([id, qty]) => {
+    const p = productos.find(x => x.id === id);
+    return p ? { nombre: p.nombre, qty, subtotal: qty * p.precio } : null;
+  }).filter(Boolean);
+
+  const total = detalle.reduce((a, b) => a + b.subtotal, 0);
+
+  const venta = {
+    fecha: hoy(),
+    hora: new Date().toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' }),
+    detalle,
+    total
+  };
+
+  await dbPush('ventas', venta);
+  toast('✓ Venta registrada — $' + total);
+  resetVenta();
+  actualizarResumenHoy();
+}
+
+// ══════════════════════
+//  RESUMEN HOY (ventas)
+// ══════════════════════
+function actualizarResumenHoy() {
+  dbListen('ventas', val => {
+    if (!val) { document.getElementById('totalHoy').textContent = '$0'; return; }
+    const hoyStr = hoy();
+    let total = 0, piezas = 0;
+    for (const v of Object.values(val)) {
+      if (v.fecha === hoyStr) {
+        total += v.total;
+        piezas += v.detalle.reduce((a, b) => a + b.qty, 0);
+      }
+    }
+    // Solo si no hay venta en proceso
+    if (!Object.keys(ventaActual).length) {
+      document.getElementById('totalHoy').textContent = '$' + total.toFixed(0);
+      document.getElementById('piezasHoy').textContent = piezas;
+    }
+  });
+}
+
+// ══════════════════════
+//  GASTOS
+// ══════════════════════
+async function guardarGasto() {
+  const desc = document.getElementById('gastoDesc').value.trim();
+  const monto = parseFloat(document.getElementById('gastoMonto').value);
+  if (!desc || isNaN(monto) || monto <= 0) { toast('Llena descripción y monto'); return; }
+
+  await dbPush('gastos', { fecha: hoy(), desc, monto });
+  document.getElementById('gastoDesc').value = '';
+  document.getElementById('gastoMonto').value = '';
+  toast('Gasto guardado');
+}
+
+function renderGastosHoy() {
+  dbListen('gastos', val => {
+    const hoyStr = hoy();
+    const gastos = val ? Object.values(val).filter(g => g.fecha === hoyStr) : [];
+    if (!gastos.length) {
+      document.getElementById('listaGastosHoy').innerHTML = '<div class="empty-state"><div class="icon">💸</div>Sin gastos registrados</div>';
+      document.getElementById('totalGastosHoy').textContent = '$0';
+      return;
+    }
+    let total = 0;
+    let html = '';
+    for (const g of gastos) {
+      total += g.monto;
+      html += `<div class="gasto-item"><span class="gasto-desc">${g.desc}</span><span class="gasto-monto">-$${g.monto.toFixed(0)}</span></div>`;
+    }
+    document.getElementById('listaGastosHoy').innerHTML = html;
+    document.getElementById('totalGastosHoy').textContent = '-$' + total.toFixed(0);
+  });
+}
+
+// ══════════════════════
+//  HISTORIAL
+// ══════════════════════
+async function renderHistorial() {
+  const val = await dbGet('ventas');
+  if (!val) {
+    document.getElementById('listaHistorial').innerHTML = '<div class="empty-state"><div class="icon">📋</div>Sin registros aún</div>';
+    return;
+  }
+
+  const ventas = Object.values(val).sort((a, b) => {
+    if (a.fecha !== b.fecha) return b.fecha.localeCompare(a.fecha);
+    return b.hora.localeCompare(a.hora);
+  }).slice(0, 30);
+
+  let html = '';
+  for (const v of ventas) {
+    const det = v.detalle.map(d => `${d.qty}× ${d.nombre}`).join(', ');
+    html += `
+      <div class="registro-item">
+        <div class="registro-header">
+          <span class="registro-fecha">${formatFecha(v.fecha)} ${v.hora}</span>
+          <span class="registro-total">+$${v.total.toFixed(0)}</span>
+        </div>
+        <div class="registro-detalle">${det}</div>
+      </div>`;
+  }
+
+  document.getElementById('listaHistorial').innerHTML = html;
+}
+
+// ══════════════════════
+//  BALANCE SEMANAL
+// ══════════════════════
+function getLunes(offset) {
+  const now = new Date();
+  const day = now.getDay();
+  const diff = (day === 0 ? -6 : 1 - day) + offset * 7;
+  const lunes = new Date(now);
+  lunes.setDate(now.getDate() + diff);
+  lunes.setHours(0,0,0,0);
+  return lunes;
+}
+
+function cambiarSemana(delta) {
+  semanaOffset += delta;
+  renderBalance();
+}
+
+async function renderBalance() {
+  const lunes = getLunes(semanaOffset);
+  const domingo = new Date(lunes);
+  domingo.setDate(lunes.getDate() + 6);
+
+  const fmt = d => `${d.getDate()}/${d.getMonth()+1}`;
+  document.getElementById('semanaLabel').textContent = `${fmt(lunes)} — ${fmt(domingo)}`;
+
+  const toISO = d => d.toISOString().split('T')[0];
+  const lunesISO = toISO(lunes);
+  const domingoISO = toISO(domingo);
+
+  const [ventas, gastos] = await Promise.all([dbGet('ventas'), dbGet('gastos')]);
+
+  const diasSemana = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
+  let resumenDias = {};
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(lunes);
+    d.setDate(lunes.getDate() + i);
+    resumenDias[toISO(d)] = { ventas: 0, gastos: 0, label: diasSemana[i] + ' ' + d.getDate() };
+  }
+
+  let totalVentas = 0, totalGastos = 0;
+
+  if (ventas) {
+    for (const v of Object.values(ventas)) {
+      if (v.fecha >= lunesISO && v.fecha <= domingoISO) {
+        if (resumenDias[v.fecha]) resumenDias[v.fecha].ventas += v.total;
+        totalVentas += v.total;
+      }
+    }
+  }
+
+  if (gastos) {
+    for (const g of Object.values(gastos)) {
+      if (g.fecha >= lunesISO && g.fecha <= domingoISO) {
+        if (resumenDias[g.fecha]) resumenDias[g.fecha].gastos += g.monto;
+        totalGastos += g.monto;
+      }
+    }
+  }
+
+  const neto = totalVentas - totalGastos;
+
+  let html = '';
+  for (const [, dia] of Object.entries(resumenDias)) {
+    if (dia.ventas === 0 && dia.gastos === 0) continue;
+    html += `
+      <div class="balance-row">
+        <span class="label">${dia.label}</span>
+        <span class="valor" style="color:var(--green)">+$${dia.ventas.toFixed(0)}</span>
+      </div>`;
+    if (dia.gastos > 0) {
+      html += `
+        <div class="balance-row" style="padding-left:12px">
+          <span class="label" style="font-size:0.72rem">  Gastos</span>
+          <span class="valor" style="color:var(--red)">-$${dia.gastos.toFixed(0)}</span>
+        </div>`;
+    }
+  }
+
+  if (!html) {
+    html = '<div class="empty-state"><div class="icon">📊</div>Sin datos esta semana</div>';
+  } else {
+    html += `
+      <div class="balance-row" style="margin-top:6px;border-top:1px solid var(--border);padding-top:8px">
+        <span class="label">Total ventas</span><span class="valor" style="color:var(--green)">$${totalVentas.toFixed(0)}</span>
+      </div>
+      <div class="balance-row">
+        <span class="label">Total gastos</span><span class="valor" style="color:var(--red)">-$${totalGastos.toFixed(0)}</span>
+      </div>
+      <div class="balance-row total">
+        <span class="label">Neto</span>
+        <span class="valor" style="color:${neto >= 0 ? 'var(--green)' : 'var(--red)'}">$${neto.toFixed(0)}</span>
+      </div>`;
+  }
+
+  document.getElementById('balanceSemana').innerHTML = html;
+}
+
+// ══════════════════════
+//  CATÁLOGO
+// ══════════════════════
+function renderCatalogo() {
+  if (!productos.length) {
+    document.getElementById('listaCatalogo').innerHTML = '<div class="empty-state">Sin productos</div>';
+    return;
+  }
+  let html = '';
+  for (const p of productos) {
+    html += `
+      <div class="product-row">
+        <div class="product-info">
+          <div class="product-name">${p.nombre} <span class="badge badge-cat">${p.categoria}</span></div>
+          <div class="product-price">$${p.precio}</div>
+        </div>
+      </div>`;
+  }
+  document.getElementById('listaCatalogo').innerHTML = html;
+}
+
+function abrirModalProducto() {
+  document.getElementById('modalProducto').classList.add('open');
+}
+
+function cerrarModal() {
+  document.getElementById('modalProducto').classList.remove('open');
+}
+
+async function guardarProducto() {
+  const nombre = document.getElementById('npNombre').value.trim();
+  const categoria = document.getElementById('npCategoria').value;
+  const precio = parseFloat(document.getElementById('npPrecio').value);
+  if (!nombre || isNaN(precio) || precio <= 0) { toast('Llena todos los campos'); return; }
+  await dbPush('productos', { nombre, categoria, precio });
+  document.getElementById('npNombre').value = '';
+  document.getElementById('npPrecio').value = '';
+  cerrarModal();
+  toast('Producto agregado');
+}
+
+// ══════════════════════
+//  INIT
+// ══════════════════════
+function init() {
+  iniciarFecha();
+  cargarProductos();
+  renderGastosHoy();
+  actualizarResumenHoy();
+  renderBalance();
+}
+
+// Esperar Firebase
+if (window._firebaseReady) {
+  init();
+} else {
+  window.addEventListener('firebaseReady', init);
+}
+</script>
+
+</body>
+</html>
