@@ -1256,12 +1256,14 @@ function renderInventario() {
   dbListen('inventario', val => {
     if (!productos.length) return;
 
-    // Actualizar select
-    renderSelectProductos();
+    // Actualizar select (sin Raspado)
+    const sel = document.getElementById('entradaProducto');
+    if (sel) sel.innerHTML = productos.filter(p => p.categoria !== 'Raspado').map(p => `<option value="${p.id}">${p.nombre}</option>`).join('');
 
-    // Renderizar lista de existencias
+    // Renderizar lista de existencias (sin Raspado)
     const cats = {};
     for (const p of productos) {
+      if (p.categoria === 'Raspado') continue;
       if (!cats[p.categoria]) cats[p.categoria] = [];
       const existencia = val && val[p.id] ? (val[p.id].existencia || 0) : 0;
       cats[p.categoria].push({ ...p, existencia });
